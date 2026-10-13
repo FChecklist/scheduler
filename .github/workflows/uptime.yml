@@ -1,0 +1,21 @@
+name: Websites are up
+# Every 15 minutes: each website must answer. A failed run is emailed to the repository owner by GitHub.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+permissions: {}
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check every website
+        run: |
+          bad=0
+          for h in itservices-rajat-agarwal.pages.dev rajat-agarwal-startup-coach.pages.dev corporate-games.pages.dev app.veridian-aios.com corporate-tambola.pages.dev corporate-bingo.pages.dev corporate-tic-tac-toe.pages.dev corporate-snakes-and-ladders.pages.dev corporate-luck-by-chance.pages.dev; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 25 "https://$h/" || echo 000)
+            echo "$code $h"
+            if [ "$code" != "200" ]; then bad=1; fi
+          done
+          exit $bad

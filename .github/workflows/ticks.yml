@@ -1,0 +1,32 @@
+name: Game housekeeping ticks
+# Every 5 minutes each game is asked to do its housekeeping: send finished games' reports, delete participant data on time,
+# delete games at the end of their 365 days. Each game has its own key, kept as a repository secret.
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: ticks
+  cancel-in-progress: false
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        site:
+          - { name: tambola, host: corporate-tambola.pages.dev, key: CRON_KEY_TAMBOLA }
+          - { name: bingo, host: corporate-bingo.pages.dev, key: CRON_KEY_BINGO }
+          - { name: tictactoe, host: corporate-tic-tac-toe.pages.dev, key: CRON_KEY_TICTACTOE }
+          - { name: snakesladders, host: corporate-snakes-and-ladders.pages.dev, key: CRON_KEY_SNAKESLADDERS }
+          - { name: luckbychance, host: corporate-luck-by-chance.pages.dev, key: CRON_KEY_LUCKBYCHANCE }
+    steps:
+      - name: Tick ${{ matrix.site.name }}
+        env:
+          CRON_KEY: ${{ secrets[matrix.site.key] }}
+        run: |
+          code=$(curl -s -o /tmp/out -w "%{http_code}" --max-time 60 -X POST "https://${{ matrix.site.host }}/api/lifecycle/tick" -H "x-cron-key: $CRON_KEY" -H "content-type: application/json" -d '{}')
+          echo "status $code"; head -c 200 /tmp/out; echo
+          test "$code" = "200"

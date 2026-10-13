@@ -1,0 +1,22 @@
+name: Keep the schedules alive
+# GitHub switches off scheduled workflows in a public repository after 60 days without activity. This adds a small commit every week.
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record the heartbeat
+        run: |
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > HEARTBEAT.txt
+          git config user.name "scheduler"
+          git config user.email "scheduler@users.noreply.github.com"
+          git add HEARTBEAT.txt
+          git commit -m "Heartbeat" || exit 0
+          git push

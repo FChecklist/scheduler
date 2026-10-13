@@ -1,0 +1,23 @@
+name: Payments ledger check
+# Every 30 minutes the central ledger of IT Services by Rajat Agarwal asks Razorpay for the last 3 days of captured payments and files any
+# that a missed webhook did not file. One ledger for every website and product.
+on:
+  schedule:
+    - cron: "11,41 * * * *"
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: reconcile
+  cancel-in-progress: false
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Reconcile
+        env:
+          RECONCILE_KEY: ${{ secrets.RECONCILE_KEY }}
+        run: |
+          code=$(curl -s -o /tmp/out -w "%{http_code}" --max-time 90 -X POST "https://itservices-rajat-agarwal.pages.dev/api/pay/reconcile?days=3" -H "x-reconcile-key: $RECONCILE_KEY")
+          echo "status $code"; head -c 300 /tmp/out; echo
+          test "$code" = "200"

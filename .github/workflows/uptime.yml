@@ -1,5 +1,5 @@
 name: Websites are up
-# Every 15 minutes: each website must answer. A failed run is emailed to the repository owner by GitHub.
+# Every 15 minutes: each website must answer, and each game must report no more than its limit of server errors in the last hour. A failed run is emailed to the repository owner by GitHub.
 on:
   schedule:
     - cron: "*/15 * * * *"
@@ -17,5 +17,20 @@ jobs:
             code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 25 "https://$h/" || echo 000)
             echo "$code $h"
             if [ "$code" != "200" ]; then bad=1; fi
+          done
+          exit $bad
+      - name: Check the games' error counts
+        # Each game answers GET /api/status/health with {ok, errors_last_hour, threshold}. A game that has not got that address yet (not deployed) is a warning, not a failure.
+        run: |
+          bad=0
+          for h in corporate-tambola.pages.dev corporate-bingo.pages.dev corporate-tic-tac-toe.pages.dev corporate-snakes-and-ladders.pages.dev corporate-luck-by-chance.pages.dev; do
+            out=$(curl -s --max-time 25 -H "accept: application/json" "https://$h/api/status/health" || true)
+            ok=$(printf '%s' "$out" | jq -r 'if type=="object" and has("ok") then (.ok|tostring) else "missing" end' 2>/dev/null || echo missing)
+            n=$(printf '%s' "$out" | jq -r '.errors_last_hour // 0' 2>/dev/null || echo 0)
+            limit=$(printf '%s' "$out" | jq -r '.threshold // 20' 2>/dev/null || echo 20)
+            echo "$h ok=$ok errors_last_hour=$n limit=$limit"
+            if [ "$ok" = "missing" ]; then echo "::warning::$h has no health address yet"; continue; fi
+            if [ "$ok" != "true" ]; then echo "::error::$h reports it is not healthy"; bad=1; fi
+            if [ "$n" -gt "$limit" ]; then echo "::error::$h answered $n server errors in the last hour (limit $limit)"; bad=1; fi
           done
           exit $bad

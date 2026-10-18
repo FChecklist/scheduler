@@ -14,7 +14,7 @@ jobs:
         run: |
           bad=0
           for h in itservices-rajat-agarwal.pages.dev rajat-agarwal-startup-coach.pages.dev corporate-games.pages.dev app.veridian-aios.com corporate-tambola.pages.dev corporate-bingo.pages.dev corporate-tic-tac-toe.pages.dev corporate-snakes-and-ladders.pages.dev corporate-luck-by-chance.pages.dev; do
-            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 25 "https://$h/" || echo 000)
+            code=$(curl -s -L -o /dev/null -w "%{http_code}" --max-time 25 "https://$h/" || echo 000)
             echo "$code $h"
             if [ "$code" != "200" ]; then bad=1; fi
           done
@@ -24,7 +24,7 @@ jobs:
         run: |
           bad=0
           for h in corporate-tambola.pages.dev corporate-bingo.pages.dev corporate-tic-tac-toe.pages.dev corporate-snakes-and-ladders.pages.dev corporate-luck-by-chance.pages.dev; do
-            out=$(curl -s --max-time 25 -H "accept: application/json" "https://$h/api/status/health" || true)
+            out=$(curl -s -L --max-time 25 -H "accept: application/json" "https://$h/api/status/health" || true)
             ok=$(printf '%s' "$out" | jq -r 'if type=="object" and has("ok") then (.ok|tostring) else "missing" end' 2>/dev/null || echo missing)
             n=$(printf '%s' "$out" | jq -r '.errors_last_hour // 0' 2>/dev/null || echo 0)
             limit=$(printf '%s' "$out" | jq -r '.threshold // 20' 2>/dev/null || echo 20)

@@ -22,6 +22,7 @@ jobs:
           - { name: tictactoe, host: corporate-tic-tac-toe.pages.dev, key: CRON_KEY_TICTACTOE }
           - { name: snakesladders, host: corporate-snakes-and-ladders.pages.dev, key: CRON_KEY_SNAKESLADDERS }
           - { name: luckbychance, host: corporate-luck-by-chance.pages.dev, key: CRON_KEY_LUCKBYCHANCE }
+          - { name: luckydraw, host: corporate-luckydraw.pages.dev, key: CRON_KEY_LUCKYDRAW }
     steps:
       - name: Tick ${{ matrix.site.name }}
         env:

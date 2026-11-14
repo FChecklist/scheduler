@@ -13,3 +13,6 @@ Each game's key is a repository secret named CRON_KEY_<GAME>. Nothing secret is 
 
 ## Second trigger (backup): Supabase pg_cron
 GitHub's schedule runs late and sometimes skips. As a second, independent trigger, the shared Supabase project has a job `game-ticks` (pg_cron, every 5 minutes) that calls `ops.tick_games()`, which POSTs `/api/lifecycle/tick` on each of the five games with that game's key. The keys are kept in Supabase Vault (secret names `game_tick_<game>`), the targets in `ops.game_tick_target`. Both triggers are safe to run together: every housekeeping step is idempotent and only does work that is due. Checked 2026-10-14: all five games answered 200.
+
+
+See [KNOWLEDGE-MAP.md](KNOWLEDGE-MAP.md) for what this repository is for and what the other repositories are for (updated 14 Nov 2026).
